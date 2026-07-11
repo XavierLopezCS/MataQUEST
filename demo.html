@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quest Log — Mock Canvas Demo</title>
+<style>
+  :root {
+    --bg: #14110f;
+    --panel: #201c18;
+    --panel-border: #3a332c;
+    --gold: #d4a72c;
+    --silver: #b8bcc2;
+    --bronze: #b0703a;
+    --text: #ece6da;
+    --muted: #8a8478;
+    --xp-bar: #6b8f4e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    margin: 0;
+    padding: 32px 20px;
+  }
+  h1 {
+    font-size: 28px;
+    letter-spacing: 1px;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+  .status {
+    display: inline-block;
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    margin-bottom: 24px;
+  }
+  .status.ok { background: #2a3b22; color: #9fd97a; }
+  .status.err { background: #3b2222; color: #d97a7a; }
+  .course {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .course h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+  }
+  .course .code {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .xp-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .xp-total {
+    font-size: 22px;
+    color: var(--xp-bar);
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .xp-bar-track {
+    flex: 1;
+    height: 10px;
+    background: #2a2620;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .xp-bar-fill {
+    height: 100%;
+    background: var(--xp-bar);
+    width: 0%;
+    transition: width 0.6s ease;
+  }
+  .trophies {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 18px;
+    font-size: 13px;
+  }
+  .trophy-count { display: flex; align-items: center; gap: 5px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.gold { background: var(--gold); }
+  .dot.silver { background: var(--silver); }
+  .dot.bronze { background: var(--bronze); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--panel-border); }
+  th { color: var(--muted); font-weight: normal; text-transform: uppercase; font-size: 11px; }
+  .badge {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .badge.gold { background: rgba(212,167,44,0.15); color: var(--gold); }
+  .badge.silver { background: rgba(184,188,194,0.15); color: var(--silver); }
+  .badge.bronze { background: rgba(176,112,58,0.15); color: var(--bronze); }
+  .badge.none { background: rgba(138,132,120,0.1); color: var(--muted); }
+</style>
+</head>
+<body>
+
+<h1>Quest Log</h1>
+<div class="sub">Live view of mock Canvas data → XP calculator output</div>
+<div id="status" class="status">connecting to localhost:3001…</div>
+<div id="courses"></div>
+
+<script>
+const API_BASE = "http://localhost:3001";
+
+async function loadCourse(course) {
+  const res = await fetch(`${API_BASE}/api/xp/${course.id}`);
+  if (!res.ok) throw new Error(`Course ${course.id} failed: ${res.status}`);
+  return res.json();
+}
+
+function badge(trophy) {
+  if (!trophy) return `<span class="badge none">none</span>`;
+  return `<span class="badge ${trophy}">${trophy}</span>`;
+}
+
+async function main() {
+  const statusEl = document.getElementById("status");
+  const coursesEl = document.getElementById("courses");
+
+  try {
+    const coursesRes = await fetch(`${API_BASE}/api/v1/courses`);
+    if (!coursesRes.ok) throw new Error("Could not reach /api/v1/courses");
+    const courses = await coursesRes.json();
+
+    statusEl.textContent = `connected — ${courses.length} course(s) found`;
+    statusEl.className = "status ok";
+
+    for (const course of courses) {
+      const xpData = await loadCourse(course);
+      const maxBarXP = 300; // just for the visual bar scale — tune as you like
+
+      const rows = xpData.perAssignment.map(a => `
+        <tr>
+          <td>${a.name}</td>
+          <td>${a.gradePercent !== null ? a.gradePercent + '%' : '—'}</td>
+          <td>${a.xp} XP</td>
+          <td>${badge(a.trophy)}</td>
+        </tr>
+      `).join("");
+
+      coursesEl.innerHTML += `
+        <div class="course">
+          <h2>${course.name}</h2>
+          <div class="code">${course.course_code}</div>
+
+          <div class="xp-row">
+            <div class="xp-total">${xpData.totalXP} XP</div>
+            <div class="xp-bar-track">
+              <div class="xp-bar-fill" style="width:${Math.min(100, (xpData.totalXP / maxBarXP) * 100)}%"></div>
+            </div>
+          </div>
+
+          <div class="trophies">
+            <div class="trophy-count"><span class="dot gold"></span> Gold × ${xpData.trophies.gold}</div>
+            <div class="trophy-count"><span class="dot silver"></span> Silver × ${xpData.trophies.silver}</div>
+            <div class="trophy-count"><span class="dot bronze"></span> Bronze × ${xpData.trophies.bronze}</div>
+          </div>
+
+          <table>
+            <thead><tr><th>Assignment</th><th>Grade</th><th>XP</th><th>Trophy</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+  } catch (err) {
+    statusEl.textContent = `not connected — is your server running? (${err.message})`;
+    statusEl.className = "status err";
+  }
+}
+
+main();
+</script>
+
+</body>
+</html>
