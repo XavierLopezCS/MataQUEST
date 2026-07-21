@@ -3,18 +3,28 @@
 // (frontend, XP logic, etc.) can be built against it before real
 // Canvas OAuth/access is sorted out.
 
+require('dotenv').config( { quiet: true} );
 const express = require('express');
 const cors = require('cors');
+const session = require('express-session');
 const { calculateCourseXP } = require('./xpCalculator');
+const { router: authRouter, ensureValidToken } = require('./auth');
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
+  resave: false,
+  saveUninitialized: false,
+}));
+
+app.use('/auth', authRouter);
 
 const PORT = 3001;
 
-// ---- Fake in-memory "Canvas" data ----
-// Feel free to add more courses/assignments/students as your team needs.
+// ---- Fake in-memory "Canvas" data ---
+// This is a test but with a Canvas API we would not need this
 
 const courses = [
   { id: 101, name: "COMP 380: Software Engineering", course_code: "COMP380" },
@@ -27,15 +37,15 @@ const assignments = {
       id: 1,
       name: "Project Proposal",
       points_possible: 10,
-      due_at: "2026-07-15T23:59:00Z",
+      due_at: "07-15-2026",
       has_submitted_submissions: true,
-      submission_grade: 9
+      submission_grade: 10
     },
     {
       id: 2,
       name: "Sprint 1 Report",
       points_possible: 20,
-      due_at: "2026-07-22T23:59:00Z",
+      due_at: "07-22-2026",
       has_submitted_submissions: false,
       submission_grade: null
     }
@@ -45,16 +55,19 @@ const assignments = {
       id: 3,
       name: "Problem Set 1",
       points_possible: 15,
-      due_at: "2026-07-18T23:59:00Z",
+      due_at: "07-18-2026",
       has_submitted_submissions: true,
       submission_grade: 15
     }
   ]
 };
 
-// ---- Routes (mirror real Canvas API paths, prefixed the same way) ----
-
 // GET /api/v1/courses
+
+app.get('/api/protected/ping', ensureValidToken, (req, res) => {
+  res.json({ message: "You're authenticated! This route required a valid session." });
+});
+
 app.get('/api/v1/courses', (req, res) => {
   res.json(courses);
 });
@@ -75,6 +88,7 @@ app.get('/api/v1/users/self', (req, res) => {
 // GET /api/xp/:courseId — NOT a real Canvas endpoint; this is our own
 // app-specific endpoint that runs the XP calculator over a course's
 // assignments and returns total XP + trophy counts.
+
 app.get('/api/xp/:courseId', (req, res) => {
   const courseId = parseInt(req.params.courseId, 10);
   const list = assignments[courseId];

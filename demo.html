@@ -145,7 +145,7 @@ async function main() {
 
     for (const course of courses) {
       const xpData = await loadCourse(course);
-      const maxBarXP = 300; // just for the visual bar scale — tune as you like
+      const maxBarXP = 200; // just for the visual bar scale — tune as you like
 
       const rows = xpData.perAssignment.map(a => `
         <tr>

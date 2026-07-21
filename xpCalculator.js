@@ -1,18 +1,17 @@
 // xpCalculator.js — XP & Trophy calculation logic
 //
-// Takes a Canvas-style assignment object (real or mock) and returns
+// Takes a Canvas-style assignment and returns
 // how much XP the student earned and what trophy tier they hit.
 //
 // Design goals:
-// - Simple, tunable numbers (all constants at the top, easy to rebalance)
-// - Works with real Canvas API fields, since it only reads fields that
-//   also exist in the real Canvas assignment/submission response shape:
+// - Simple, tunable numbers (all constants at the top, easy to change)
+// - Works with real Canvas API, by reading fields that exist in canvas submissions
 //     points_possible, has_submitted_submissions, submission_grade, due_at
 
-// ---- Tunable constants ----
+// ---- changeable constants ----
 const XP_PER_POINT = 10;        // base XP earned per point_possible, if fully completed
 const ON_TIME_BONUS_XP = 15;    // flat bonus if submitted before due_at
-const LATE_PENALTY_MULTIPLIER = 0.5; // XP multiplier if submitted late (still get partial credit)
+const LATE_PENALTY_MULTIPLIER = 0.5; // XP multiplier if submitted late (partial credit)
 
 const TROPHY_THRESHOLDS = {
   gold: 0.95,   // grade percentage >= 95%
