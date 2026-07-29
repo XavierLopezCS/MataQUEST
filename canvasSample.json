@@ -1,0 +1,68 @@
+{
+  "_comment": "Realistic RAW Canvas API response shapes, for testing normalizeAssignment() without live access. Field names/nesting here mirror what canvas actually returns from GET /courses/:id/assignments?include[]=submission",
+  "courses": [
+    { "id": 101, "name": "COMP 380: Software Engineering", "course_code": "COMP380" },
+    { "id": 102, "name": "MATH 210: Discrete Structures", "course_code": "MATH210" }
+  ],
+  "assignments": {
+    "101": [
+      {
+        "id": 1,
+        "name": "Project Proposal",
+        "points_possible": 10,
+        "due_at": "2026-07-15T23:59:00Z",
+        "submission": {
+          "workflow_state": "graded",
+          "score": 10,
+          "submitted_at": "2026-07-14T18:22:00Z"
+        }
+      },
+      {
+        "id": 2,
+        "name": "Sprint 1 Report",
+        "points_possible": 20,
+        "due_at": "2026-07-22T23:59:00Z",
+        "submission": {
+          "workflow_state": "unsubmitted",
+          "score": null,
+          "submitted_at": null
+        }
+      },
+      {
+        "id": 4,
+        "name": "Late Lab Writeup",
+        "points_possible": 25,
+        "due_at": "2026-07-10T23:59:00Z",
+        "submission": {
+          "workflow_state": "graded",
+          "score": 21,
+          "submitted_at": "2026-07-12T09:05:00Z"
+        }
+      },
+      {
+        "id": 5,
+        "name": "Peer Review (turned in, not graded yet)",
+        "points_possible": 5,
+        "due_at": "2026-07-20T23:59:00Z",
+        "submission": {
+          "workflow_state": "submitted",
+          "score": null,
+          "submitted_at": "2026-07-19T14:00:00Z"
+        }
+      }
+    ],
+    "102": [
+      {
+        "id": 3,
+        "name": "Problem Set 1",
+        "points_possible": 15,
+        "due_at": "2026-07-18T23:59:00Z",
+        "submission": {
+          "workflow_state": "graded",
+          "score": 15,
+          "submitted_at": "2026-07-17T20:10:00Z"
+        }
+      }
+    ]
+  }
+}
