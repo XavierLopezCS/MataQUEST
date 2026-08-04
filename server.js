@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const { calculateCourseXP } = require('./xpCalculator');
 const { router: authRouter, ensureValidToken } = require('./auth');
+const mockStore = require('./mockStore');
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
@@ -78,6 +79,29 @@ app.get('/api/xp/:courseId', (req, res) => {
 
   const result = calculateCourseXP(list);
   res.json(result);
+});
+
+// POST /api/assignments — manual assignment entry (SCRUM-261).
+// NOT a real Canvas endpoint. With no live Canvas sync, this is how
+// assignments get into the mock store from the browser. It goes through
+// mockStore, so it produces byte-for-byte the same data that `npm run edit`
+// does, and the new assignment shows up on the next demo.html refresh.
+app.post('/api/assignments', (req, res) => {
+  try {
+    const result = mockStore.createAssignment(req.body, {
+      validCourseIds: courses.map(c => c.id),
+    });
+    if (!result.ok) {
+      return res.status(400).json({ error: 'Validation failed', details: result.errors });
+    }
+    res.status(201).json({
+      message: `Added "${result.assignment.name}" to course ${result.courseId}.`,
+      assignment: result.assignment,
+    });
+  } catch (err) {
+    console.error('Failed to add assignment:', err);
+    res.status(500).json({ error: 'Could not save assignment', details: err.message });
+  }
 });
 
 app.get('/', (req, res) => {

@@ -15,15 +15,6 @@
       "due_at": "2026-07-22",
       "has_submitted_submissions": false,
       "submission_grade": null
-    },
-    {
-      "id": 4,
-      "name": "Visual HTML Adding",
-      "points_possible": 75,
-      "due_at": "2026-08-04",
-      "has_submitted_submissions": true,
-      "submission_grade": 65,
-      "submitted_at": "2026-08-03"
     }
   ],
   "102": [
