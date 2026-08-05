@@ -7,8 +7,11 @@ require('dotenv').config( { quiet: true} );
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
+const fs = require('fs');
+const path = require('path');
 const { calculateCourseXP } = require('./xpCalculator');
 const { router: authRouter, ensureValidToken } = require('./auth');
+const mockStore = require('./mockStore');
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
@@ -31,36 +34,16 @@ const courses = [
   { id: 102, name: "MATH 210: Discrete Structures", course_code: "MATH210" }
 ];
 
-const assignments = {
-  101: [
-    {
-      id: 1,
-      name: "Project Proposal",
-      points_possible: 10,
-      due_at: "07-15-2026",
-      has_submitted_submissions: true,
-      submission_grade: 10
-    },
-    {
-      id: 2,
-      name: "Sprint 1 Report",
-      points_possible: 20,
-      due_at: "07-22-2026",
-      has_submitted_submissions: true,
-      submission_grade: 20
-    }
-  ],
-  102: [
-    {
-      id: 3,
-      name: "Problem Set 1",
-      points_possible: 15,
-      due_at: "07-18-2026",
-      has_submitted_submissions: true,
-      submission_grade: 15
-    }
-  ]
-};
+// Mock assignments now live in mockAssignments.json so they can be edited
+// with the mockEditor.cjs tool. We read the file FRESH on each request (rather
+// than require(), which caches) so edits show up on a browser refresh without
+// needing to restart the server.
+const MOCK_ASSIGNMENTS_FILE = path.join(__dirname, 'mockAssignments.json');
+
+function loadAssignments() {
+  const raw = fs.readFileSync(MOCK_ASSIGNMENTS_FILE, 'utf8');
+  return JSON.parse(raw);
+}
 
 // GET /api/v1/courses
 
@@ -74,8 +57,8 @@ app.get('/api/v1/courses', (req, res) => {
 
 // GET /api/v1/courses/:id/assignments
 app.get('/api/v1/courses/:id/assignments', (req, res) => {
-  const courseId = parseInt(req.params.id, 10);
-  const list = assignments[courseId];
+  const assignments = loadAssignments();
+  const list = assignments[req.params.id];
   if (!list) return res.status(404).json({ error: "Course not found" });
   res.json(list);
 });
@@ -90,12 +73,35 @@ app.get('/api/v1/users/self', (req, res) => {
 // assignments and returns total XP + trophy counts.
 
 app.get('/api/xp/:courseId', (req, res) => {
-  const courseId = parseInt(req.params.courseId, 10);
-  const list = assignments[courseId];
+  const assignments = loadAssignments();
+  const list = assignments[req.params.courseId];
   if (!list) return res.status(404).json({ error: "Course not found" });
 
   const result = calculateCourseXP(list);
   res.json(result);
+});
+
+// POST /api/assignments — manual assignment entry (SCRUM-261).
+// NOT a real Canvas endpoint. With no live Canvas sync, this is how
+// assignments get into the mock store from the browser. It goes through
+// mockStore, so it produces byte-for-byte the same data that `npm run edit`
+// does, and the new assignment shows up on the next demo.html refresh.
+app.post('/api/assignments', (req, res) => {
+  try {
+    const result = mockStore.createAssignment(req.body, {
+      validCourseIds: courses.map(c => c.id),
+    });
+    if (!result.ok) {
+      return res.status(400).json({ error: 'Validation failed', details: result.errors });
+    }
+    res.status(201).json({
+      message: `Added "${result.assignment.name}" to course ${result.courseId}.`,
+      assignment: result.assignment,
+    });
+  } catch (err) {
+    console.error('Failed to add assignment:', err);
+    res.status(500).json({ error: 'Could not save assignment', details: err.message });
+  }
 });
 
 app.get('/', (req, res) => {

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Add Assignment — Mock Canvas</title>
+<style>
+  :root {
+    --bg: #14110f;
+    --panel: #201c18;
+    --panel-border: #3a332c;
+    --gold: #d4a72c;
+    --text: #ece6da;
+    --muted: #8a8478;
+    --xp-bar: #6b8f4e;
+    --field-bg: #17130f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    margin: 0;
+    padding: 32px 20px;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; }
+  h1 {
+    font-size: 28px;
+    letter-spacing: 1px;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+  }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .sub a { color: var(--xp-bar); text-decoration: none; }
+  .sub a:hover { text-decoration: underline; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 24px;
+  }
+
+  label { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .field { margin-bottom: 18px; }
+  input[type="text"], input[type="number"], input[type="date"], select {
+    width: 100%;
+    background: var(--field-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 10px;
+  }
+  input:focus-visible, select:focus-visible, button:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+  .checkbox-row { display: flex; align-items: center; gap: 9px; margin-bottom: 18px; }
+  .checkbox-row input { width: 16px; height: 16px; accent-color: var(--xp-bar); }
+  .checkbox-row label { margin: 0; text-transform: none; font-size: 14px; color: var(--text); letter-spacing: 0; }
+
+  .submission-details { display: none; border-left: 2px solid var(--panel-border); padding-left: 16px; margin-bottom: 6px; }
+  .submission-details.show { display: block; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: -12px; margin-bottom: 18px; }
+
+  button {
+    background: var(--xp-bar);
+    color: #14110f;
+    border: none;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 11px 18px;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+  }
+  button:hover { filter: brightness(1.1); }
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  .status { display: none; font-size: 13px; padding: 10px 12px; border-radius: 4px; margin-top: 18px; line-height: 1.5; }
+  .status.show { display: block; }
+  .status.ok  { background: #2a3b22; color: #9fd97a; }
+  .status.err { background: #3b2222; color: #d97a7a; }
+  .status.pending { background: #2a2620; color: var(--muted); }
+  .status ul { margin: 6px 0 0; padding-left: 18px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    button { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Add Assignment</h1>
+  <div class="sub">Manual entry into the mock Canvas store · <a href="demo.html">← back to Quest Log</a></div>
+
+  <div class="panel">
+    <form id="form" novalidate>
+      <div class="field">
+        <label for="course">Course</label>
+        <select id="course" name="courseId" required>
+          <option value="">Loading courses…</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="name">Assignment name</label>
+        <input type="text" id="name" name="name" placeholder="e.g. Sprint 2 Report" required>
+      </div>
+
+      <div class="field">
+        <label for="points">Points possible</label>
+        <input type="number" id="points" name="points_possible" min="0" step="1" placeholder="e.g. 20" required>
+      </div>
+
+      <div class="field">
+        <label for="due">Due date</label>
+        <input type="date" id="due" name="due_at">
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="submitted" name="has_submitted_submissions">
+        <label for="submitted">Already submitted?</label>
+      </div>
+
+      <div class="submission-details" id="submissionDetails">
+        <div class="field">
+          <label for="grade">Grade</label>
+          <input type="number" id="grade" name="submission_grade" min="0" step="1" placeholder="leave blank = not graded yet">
+        </div>
+        <div class="field">
+          <label for="submittedAt">Submitted on</label>
+          <input type="date" id="submittedAt" name="submitted_at">
+        </div>
+        <div class="hint">A submitted date after the due date makes it count as late in the XP calculation.</div>
+      </div>
+
+      <button type="submit" id="submitBtn">Add assignment</button>
+    </form>
+
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
+<script>
+const API_BASE = "http://localhost:3001";
+
+const form = document.getElementById("form");
+const courseSelect = document.getElementById("course");
+const submittedCheckbox = document.getElementById("submitted");
+const submissionDetails = document.getElementById("submissionDetails");
+const statusEl = document.getElementById("status");
+const submitBtn = document.getElementById("submitBtn");
+
+function setStatus(kind, html) {
+  statusEl.className = `status show ${kind}`;
+  statusEl.innerHTML = html;
+}
+
+// Reveal grade / submitted-on only when the box is checked
+submittedCheckbox.addEventListener("change", () => {
+  submissionDetails.classList.toggle("show", submittedCheckbox.checked);
+});
+
+// Populate the course dropdown from the same endpoint the demo uses
+async function loadCourses() {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/courses`);
+    if (!res.ok) throw new Error(`/api/v1/courses returned ${res.status}`);
+    const courses = await res.json();
+    courseSelect.innerHTML = courses
+      .map(c => `<option value="${c.id}">${c.name}</option>`)
+      .join("");
+  } catch (err) {
+    courseSelect.innerHTML = `<option value="">— server not reachable —</option>`;
+    setStatus("err", `Couldn't load courses. Is the server running on ${API_BASE}? (${err.message})`);
+  }
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const payload = {
+    courseId: courseSelect.value,
+    name: document.getElementById("name").value,
+    points_possible: document.getElementById("points").value,
+    due_at: document.getElementById("due").value,
+    has_submitted_submissions: submittedCheckbox.checked,
+    submission_grade: document.getElementById("grade").value,
+    submitted_at: document.getElementById("submittedAt").value,
+  };
+
+  submitBtn.disabled = true;
+  setStatus("pending", "Saving…");
+
+  try {
+    const res = await fetch(`${API_BASE}/api/assignments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      const list = (data.details || [data.error || "Something went wrong."])
+        .map(d => `<li>${d}</li>`).join("");
+      setStatus("err", `Couldn't add it:<ul>${list}</ul>`);
+    } else {
+      const a = data.assignment;
+      setStatus("ok",
+        `Added <strong>#${a.id} ${a.name}</strong> to course ${data.assignment && courseSelect.value}. ` +
+        `Refresh the <a href="demo.html">Quest Log</a> to see it.`);
+      form.reset();
+      submissionDetails.classList.remove("show");
+    }
+  } catch (err) {
+    setStatus("err", `Request failed. Is the server running on ${API_BASE}? (${err.message})`);
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
+loadCourses();
+</script>
+</body>
+</html>
