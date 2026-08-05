@@ -46,8 +46,8 @@ const assignments = {
       name: "Sprint 1 Report",
       points_possible: 20,
       due_at: "07-22-2026",
-      has_submitted_submissions: false,
-      submission_grade: null
+      has_submitted_submissions: true,
+      submission_grade: 20
     }
   ],
   102: [
