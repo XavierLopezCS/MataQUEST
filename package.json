@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "node testCanvasNormalizer.js",
+    "test": "jest",
+    "test:canvas-normalizer": "node testCanvasNormalizer.js",
     "edit": "node mockEditor.js",
     "start": "node server.js"
   },
@@ -18,6 +19,10 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "express-session": "^1.19.0"
+    "express-session": "^1.19.0",
+    "mongoose": "^9.9.1"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
   }
 }

@@ -9,9 +9,11 @@ const cors = require('cors');
 const session = require('express-session');
 const fs = require('fs');
 const path = require('path');
-const { calculateCourseXP } = require('./xpCalculator');
+const { calculateCourseXP, calculateAssignmentXP } = require('./xpCalculator');
 const { router: authRouter, ensureValidToken } = require('./auth');
 const mockStore = require('./mockStore');
+const xpStore = require('./xpStore');
+const { connectDB } = require('./db');
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
@@ -104,10 +106,152 @@ app.post('/api/assignments', (req, res) => {
   }
 });
 
+// ---- helper: look up a single assignment by course + assignment id ----
+// Reads fresh from mockAssignments.json each time, same pattern as the
+// rest of this file, so it stays in sync with edits made via mockStore.
+function findAssignment(courseId, assignmentId) {
+  const assignments = loadAssignments();
+  const list = assignments[courseId];
+  if (!list) return null;
+  return list.find(a => String(a.id) === String(assignmentId)) || null;
+}
+
+// POST /api/xp/award — award XP for one completed assignment.
+// Body: { userId, courseId, assignmentId, submittedAt? }
+// Persists the award in MongoDB (idempotent — an assignment can only be
+// awarded once per user).
+app.post('/api/xp/award', async (req, res) => {
+  try {
+    const { userId, courseId, assignmentId, submittedAt } = req.body || {};
+
+    if (userId === undefined || courseId === undefined || assignmentId === undefined) {
+      return res.status(400).json({ error: "userId, courseId, and assignmentId are required" });
+    }
+
+    const assignment = findAssignment(String(courseId), assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ error: "Assignment not found for that course" });
+    }
+
+    if (await xpStore.hasAwarded(userId, courseId, assignmentId)) {
+      return res.status(409).json({ error: "XP for this assignment has already been awarded to this user" });
+    }
+
+    const result = calculateAssignmentXP(assignment, submittedAt);
+
+    if (result.xp === 0 && result.breakdown.reason === "not_submitted") {
+      return res.status(400).json({ error: "Assignment has not been submitted/graded yet — no XP to award" });
+    }
+
+    const { xpAfter } = await xpStore.awardXP(userId, {
+      courseId,
+      assignmentId,
+      xp: result.xp,
+      trophy: result.trophy,
+      gradePercent: result.gradePercent,
+      breakdown: result.breakdown
+    });
+
+    res.status(201).json({
+      awarded: {
+        courseId,
+        assignmentId,
+        assignmentName: assignment.name,
+        xp: result.xp,
+        trophy: result.trophy,
+        gradePercent: result.gradePercent
+      },
+      totalXP: xpAfter
+    });
+  } catch (err) {
+    console.error('POST /api/xp/award failed:', err.message);
+    res.status(500).json({ error: 'Failed to award XP', details: err.message });
+  }
+});
+
+// GET /api/user/progress — a user's total XP and per-assignment trophy
+// counts.
+// Query: ?userId=42
+app.get('/api/user/progress', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (userId === undefined) {
+      return res.status(400).json({ error: "userId query parameter is required" });
+    }
+
+    const progress = await xpStore.getUserProgress(userId);
+
+    res.json({
+      userId,
+      totalXP: progress.totalXP,
+      assignmentsCompleted: progress.assignmentsCompleted,
+      trophies: progress.trophies,
+      history: progress.history
+    });
+  } catch (err) {
+    console.error('GET /api/user/progress failed:', err.message);
+    res.status(500).json({ error: 'Failed to load progress', details: err.message });
+  }
+});
+
+// GET /api/dashboard — aggregation endpoint combining all courses:
+// XP available vs. XP actually earned per course. Powers the main
+// dashboard view.
+// Query: ?userId=42
+app.get('/api/dashboard', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (userId === undefined) {
+      return res.status(400).json({ error: "userId query parameter is required" });
+    }
+
+    const allAssignments = loadAssignments();
+
+    const courseBreakdown = await Promise.all(courses.map(async course => {
+      const courseAssignments = allAssignments[course.id] || [];
+      const possible = calculateCourseXP(courseAssignments); // XP if everything is completed as-is
+      const earnedHistory = await xpStore.getUserHistoryForCourse(userId, course.id);
+      const earnedXP = earnedHistory.reduce((sum, h) => sum + h.xp, 0);
+
+      return {
+        courseId: course.id,
+        courseName: course.name,
+        courseCode: course.course_code,
+        possibleXP: possible.totalXP,
+        earnedXP,
+        assignmentsAwarded: earnedHistory.length,
+        assignmentsTotal: courseAssignments.length
+      };
+    }));
+
+    const progress = await xpStore.getUserProgress(userId);
+
+    res.json({
+      userId,
+      totalXP: progress.totalXP,
+      trophies: progress.trophies,
+      courses: courseBreakdown
+    });
+  } catch (err) {
+    console.error('GET /api/dashboard failed:', err.message);
+    res.status(500).json({ error: 'Failed to load dashboard', details: err.message });
+  }
+});
+
 app.get('/', (req, res) => {
   res.send('Mock Canvas API is running. Try /api/v1/courses');
 });
 
-app.listen(PORT, () => {
-  console.log(`Mock Canvas API listening on http://localhost:${PORT}`);
-});
+async function start() {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`Mock Canvas API listening on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err.message);
+    process.exit(1);
+  }
+}
+
+start();
