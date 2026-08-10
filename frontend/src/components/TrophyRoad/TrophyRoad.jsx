@@ -190,7 +190,7 @@ useLayoutEffect(() => {
                     ref={currentTrophyBadgeRef}
                     className="current-trophy-badge"
                 >
-                <span className="trophy-symbol">ICON</span>
+                <span className="trophy-symbol">🏆</span>
                 <strong>{trophies}</strong>
             </div>
             )}
@@ -272,7 +272,7 @@ useLayoutEffect(() => {
             </strong>
 
             <span>
-              ICON {section.arena.min}
+              🏆 {section.arena.min}
             </span>
           </div>
         </div>

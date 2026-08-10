@@ -237,6 +237,12 @@ const shopItems = [
 
 ];
 
+const TROPHY_POINTS = {
+  bronze: 10,
+  silver: 20,
+  gold: 30,
+};
+
 function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [quests, setQuests] = useState([]);
@@ -296,19 +302,18 @@ function App() {
 
     const formattedQuests = assignments.map((assignment) => ({
       id: assignment.id,
+      courseId: 101,
+
       title:
         assignment.name ??
         assignment.title ??
         "Untitled Assignment",
+
       course: "COMP 380",
       due: assignment.due_at ?? "No due date",
+
       xp: assignment.points_possible ?? 0,
-      trophies: Math.max(
-        10,
-        Math.round(
-          (assignment.points_possible ?? 0) / 4
-        )
-      ),
+
       completed: false,
     }));
 
@@ -375,6 +380,34 @@ async function addAssignment(event) {
     setAssignmentSaving(false);
   }
 }
+    useEffect(() => {
+  async function loadPlayerProgress() {
+    try {
+      const response = await fetch(
+        "http://localhost:3001/api/user/progress?userId=42"
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Could not load player progress."
+        );
+      }
+
+      const data = await response.json();
+
+      setPlayerXP(data.totalXP);
+
+    } catch (error) {
+      console.error(
+        "Failed to load player progress:",
+        error
+      );
+    }
+  }
+
+  loadPlayerProgress();
+}, []);
+
 
     useEffect(() => {
 
@@ -426,19 +459,73 @@ async function addAssignment(event) {
     showToast.timer = window.setTimeout(() => setToast(""), 2600);
   }
 
-  function completeQuest(questId) {
-    const selectedQuest = quests.find((quest) => quest.id === questId);
-    if (!selectedQuest || selectedQuest.completed) return;
+ async function completeQuest(questId) {
+  const selectedQuest =
+    quests.find((quest) => quest.id === questId);
+
+  if (!selectedQuest || selectedQuest.completed) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      "http://localhost:3001/api/xp/award",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          userId: 42,
+          courseId: selectedQuest.courseId,
+          assignmentId: selectedQuest.id,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ?? "Could not complete quest."
+      );
+    }
+
+    const trophyTier =
+      data.awarded.trophy?.toLowerCase();
+
+    const trophyPoints =
+      TROPHY_POINTS[trophyTier] ?? 0;
 
     setQuests((currentQuests) =>
       currentQuests.map((quest) =>
-        quest.id === questId ? { ...quest, completed: true } : quest
+        quest.id === questId
+          ? { ...quest, completed: true }
+          : quest
       )
     );
-    setPlayerXP((currentXP) => currentXP + selectedQuest.xp);
-    setTrophies((currentTrophies) => currentTrophies + selectedQuest.trophies);
-    showToast(`Quest complete: +${selectedQuest.xp} XP and +${selectedQuest.trophies} trophies`);
+
+    // Xavier's backend is the source of truth for XP
+    setPlayerXP(data.totalXP);
+
+    // Frontend converts Bronze/Silver/Gold
+    // into Trophy Road progression points
+    setTrophies(
+      (current) => current + trophyPoints
+    );
+
+    showToast(
+      `Quest complete: +${data.awarded.xp} XP, +${trophyPoints} trophies`
+    );
+
+  } catch (error) {
+    console.error(
+      "Failed to complete quest:",
+      error
+    );
   }
+}
 
  function buyCosmetic(item) {
   if (ownedCosmetics.includes(item.id)) return;
@@ -794,7 +881,7 @@ function revealRoadReward() {
 
   <div className="resource-bar">
     <div className="resource-pill">
-      <span className="resource-icon">TROPHIES </span>
+      <span className="resource-icon">🏆</span>
       <strong>{trophies}</strong>
     </div>
 
@@ -1067,19 +1154,19 @@ function HomeScreen({
 
         <div className="home-mini-stats">
           <StatCard
-            icon="ICON"
+            icon="📝"
             value={remainingQuests}
             label="Active"
           />
 
           <StatCard
-            icon="ICON"
+            icon="✅"
             value={completedQuests}
             label="Completed"
           />
 
           <StatCard
-            icon="ICON"
+            icon="🔥"
             value="3"
             label="Streak"
           />
