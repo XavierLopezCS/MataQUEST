@@ -1,0 +1,728 @@
+.new-trophy-road {
+  --road-blue-dark: #061d42;
+  --road-blue: #0b4d9b;
+  --road-blue-light: #35a9ff;
+  --road-outline: #031126;
+
+  min-height: 100vh;
+  overflow: hidden;
+
+  color: white;
+  background-color: #082b5c;
+  border-radius: 28px;
+}
+
+.trophy-road-title-bar {
+  display: grid;
+  place-items: center;
+
+  min-height: 82px;
+  padding: 14px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #103f82,
+      #08285a
+    );
+
+  border-bottom: 4px solid #031736;
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.2),
+    0 8px 18px rgba(0, 0, 0, 0.38);
+}
+
+.trophy-road-title-bar h1 {
+  margin: 0;
+
+  color: white;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 1000;
+  letter-spacing: 0.03em;
+
+  text-shadow:
+    -3px -3px 0 #111,
+    3px -3px 0 #111,
+    -3px 3px 0 #111,
+    3px 3px 0 #111,
+    0 6px 0 rgba(0, 0, 0, 0.35);
+}
+
+.trophy-road-content {
+  display: grid;
+  grid-template-columns: 105px minmax(0, 1fr);
+  gap: 18px;
+
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 26px 20px 42px;
+}
+
+.trophy-progress-column {
+  position: relative;
+  align-self: stretch;
+
+  display: flex;
+  justify-content: center;
+
+  padding: 0 0 120px;
+}
+
+.current-trophy-badge {
+  position: absolute;
+  top: 10%;
+  left: -72px;
+  z-index: 8;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-width: 112px;
+  padding: 10px 14px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #273653,
+      #111b30
+    );
+
+  border: 3px solid #071329;
+  border-radius: 12px;
+
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.12),
+    0 6px 10px rgba(0, 0, 0, 0.4);
+
+  transform: translate(-50%, -50%);
+}
+
+.current-trophy-badge strong {
+   font-size: 1.1rem;
+}
+
+.trophy-symbol {
+  font-size: 1.25rem;
+}
+
+.vertical-progress-shell {
+  position: absolute;
+  top: 0;
+  bottom: 120px;
+  left: 50%;
+
+  width: 34px;
+  min-height: 0;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      90deg,
+      #101b34,
+      #29395d,
+      #101b34
+    );
+
+  border: 5px solid #07152c;
+  border-radius: 18px;
+
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.75),
+    0 8px 18px rgba(0, 0, 0, 0.4);
+
+  transform: translateX(-50%);
+}
+
+.vertical-progress-fill {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  left: 6px;
+
+  min-height: 8px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #268aff,
+      #67c5ff,
+      #268aff
+    );
+
+  border: 2px solid #9bddff;
+  border-radius: 9px;
+
+  box-shadow:
+    0 0 15px rgba(55, 173, 255, 0.9),
+    inset 0 0 8px rgba(255, 255, 255, 0.65);
+
+  transition: height 500ms ease;
+}
+
+.trophy-road-main {
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+}
+
+.road-arena-hero {
+  display: grid;
+  justify-items: center;
+
+  width: 100%;
+  margin-bottom: 34px;
+}
+
+.road-arena-section {
+  display: grid;
+  gap: 48px;
+  width: 100%;
+  margin-bottom: 90px;
+}
+
+.road-section-banner {
+  display: grid;
+  justify-items: center;
+  width: 100%;
+}
+
+.road-section-arena-image {
+  width: min(58%, 340px);
+  max-height: 300px;
+  object-fit: contain;
+
+  filter:
+    drop-shadow(0 22px 18px rgba(0, 0, 0, 0.5));
+
+}
+
+.road-section-arena-placeholder {
+  display: grid;
+  place-items: center;
+
+  width: min(58%, 340px);
+  min-height: 230px;
+
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 900;
+
+  background: rgba(0, 0, 0, 0.2);
+  border: 3px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 26px;
+}
+
+.road-section-banner h2 {
+  margin: 8px 0 12px;
+
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  font-weight: 1000;
+  text-align: center;
+
+  text-shadow:
+    -3px -3px 0 #111,
+    3px -3px 0 #111,
+    -3px 3px 0 #111,
+    3px 3px 0 #111;
+}
+
+.road-section-arena-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 24px;
+
+  width: min(100%, 460px);
+  padding: 13px 22px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #2ba5ef,
+      #0871ca
+    );
+
+  border: 4px solid #07529a;
+  border-radius: 18px;
+
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.28),
+    0 7px 0 #032f67,
+    0 13px 18px rgba(0, 0, 0, 0.35);
+}
+
+.road-section-arena-info strong,
+.road-section-arena-info span {
+  font-size: clamp(1.05rem, 2.3vw, 1.55rem);
+  font-weight: 1000;
+}
+
+.road-section-arena-info span {
+  color: #ffe548;
+}
+
+.road-section-rewards {
+  display: grid;
+  gap: 46px;
+  width: 100%;
+}
+
+.road-arena-art {
+  display: block;
+
+  width: min(58%, 340px);
+  max-height: 300px;
+
+  object-fit: contain;
+
+  filter:
+    drop-shadow(0 24px 18px rgba(0, 0, 0, 0.55));
+
+  animation: roadArenaFloat 4s ease-in-out infinite;
+}
+
+.road-arena-placeholder {
+  display: grid;
+  place-items: center;
+
+  width: min(72%, 430px);
+  height: 330px;
+
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 900;
+
+  background: rgba(0, 0, 0, 0.25);
+  border: 3px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 30px;
+}
+
+.road-arena-hero h2 {
+  margin: 8px 0 12px;
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  font-weight: 1000;
+  text-align: center;
+
+  text-shadow:
+    -3px -3px 0 #111,
+    3px -3px 0 #111,
+    -3px 3px 0 #111,
+    3px 3px 0 #111,
+    0 6px 0 rgba(0, 0, 0, 0.28);
+}
+
+.road-arena-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 24px;
+
+  width: min(100%, 460px);
+  padding: 13px 22px;
+  border-width: 4px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #2ba5ef,
+      #0871ca
+    );
+
+  border: 5px solid #07529a;
+  border-radius: 18px;
+
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.28),
+    0 8px 0 #032f67,
+    0 14px 18px rgba(0, 0, 0, 0.35);
+}
+
+.road-arena-banner strong,
+.arena-trophy-requirement {
+  font-size: clamp(1.05rem, 2.3vw, 1.55rem);
+  font-weight: 1000;
+
+  text-shadow:
+    2px 2px 0 rgba(0, 0, 0, 0.7);
+}
+
+.arena-trophy-requirement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #ffe548;
+}
+
+.road-reward-list {
+  position: relative;
+  width: 100%;
+}
+
+.road-reward-row {
+  position: relative;
+  width: 100%;
+  min-height: 175px;
+}
+
+.road-threshold {
+  position: absolute;
+  top: 50%;
+  left: -48px;
+  z-index: 3;
+
+  width: 50px;
+
+  color: white;
+  font-size: clamp(1.15rem, 2.4vw, 1.7rem);
+  font-weight: 1000;
+  text-align: right;
+
+  transform: translateY(-50%);
+
+  text-shadow:
+    -2px -2px 0 #111,
+    2px -2px 0 #111,
+    -2px 2px 0 #111,
+    2px 2px 0 #111;
+}
+
+.road-threshold::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 6px);
+
+  width: 33px;
+  height: 2px;
+
+  background: rgba(255, 255, 255, 0.42);
+  transform: translateY(-50%);
+}
+
+.road-floating-island {
+  position: relative;
+
+  display: grid;
+  align-items: center;
+
+  width: min(560px, calc(100% - 20px));
+  min-height: 175px;
+  margin: 0 auto;
+  padding: 22px 28px;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      180deg,
+      #848b75 0%,
+      #53614b 56%,
+      #273724 100%
+    );
+
+  border: 5px solid #1a2d1a;
+  border-radius: 22px;
+
+  box-shadow:
+    inset 0 5px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -12px 18px rgba(0, 0, 0, 0.26),
+    0 16px 24px rgba(0, 0, 0, 0.42);
+}
+
+.road-floating-island::before {
+  content: "";
+
+  position: absolute;
+  inset: 15px;
+
+  opacity: 0.5;
+
+  background:
+    radial-gradient(
+      circle at 18% 30%,
+      #adb09b 0 15px,
+      transparent 16px
+    ),
+    radial-gradient(
+      circle at 74% 62%,
+      #313d32 0 18px,
+      transparent 19px
+    ),
+    linear-gradient(
+      90deg,
+      transparent 47%,
+      rgba(45, 182, 185, 0.65) 48% 55%,
+      transparent 56%
+    );
+
+  border-radius: 15px;
+}
+
+.road-reward-box {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  place-items: center;
+  justify-content: center;
+
+  width: 118px;
+  height: 118px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #dce3eb
+    );
+
+  border: 7px solid #b5c0ce;
+  border-radius: 18px;
+
+  box-shadow:
+    inset 0 4px 0 rgba(255, 255, 255, 0.95),
+    0 8px 0 #4c5968,
+    0 13px 20px rgba(0, 0, 0, 0.35);
+}
+
+.road-reward-row:nth-child(even)
+  .road-reward-box {
+  justify-self: end;
+}
+
+.road-reward-row:nth-child(odd)
+  .road-reward-box {
+  justify-self: start;
+}
+
+.road-reward-button {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 2px;
+
+  border: none;
+  background: transparent;
+
+  cursor: pointer;
+}
+
+.road-reward-button:disabled {
+  cursor: default;
+}
+
+.road-reward-image {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+    image-rendering: pixelated;
+  filter:
+    drop-shadow(0 7px 6px rgba(0, 0, 0, 0.35));
+
+  transition:
+    transform 180ms ease,
+    filter 180ms ease;
+}
+
+.road-reward-button:not(:disabled):hover
+  .road-reward-image {
+  transform: translateY(-5px) scale(1.08);
+
+  filter:
+    drop-shadow(0 10px 9px rgba(0, 0, 0, 0.42))
+    drop-shadow(0 0 12px rgba(255, 217, 80, 0.55));
+}
+
+.reward-checkmark {
+  position: absolute;
+  top: -17px;
+  right: -16px;
+  z-index: 3;
+
+  display: grid;
+  place-items: center;
+
+  width: 46px;
+  height: 46px;
+
+  color: white;
+  font-size: 1.75rem;
+  font-weight: 1000;
+
+  background: #23c83c;
+  border: 4px solid white;
+  border-radius: 50%;
+
+  box-shadow:
+    0 5px 0 #087f1c,
+    0 8px 12px rgba(0, 0, 0, 0.35);
+}
+
+.reward-is-claimed {
+  filter: saturate(0.85);
+}
+
+.reward-placeholder {
+  color: #344050;
+  font-size: 2rem;
+  font-weight: 1000;
+}
+
+.island-decoration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.island-decoration span {
+  position: absolute;
+  display: block;
+
+  background: #46764b;
+  border-radius: 50%;
+}
+
+.island-decoration span:nth-child(1) {
+  right: 10%;
+  bottom: 17%;
+  width: 45px;
+  height: 60px;
+}
+
+.island-decoration span:nth-child(2) {
+  right: 19%;
+  bottom: 21%;
+  width: 28px;
+  height: 42px;
+}
+
+.island-decoration span:nth-child(3) {
+  right: 6%;
+  bottom: 18%;
+  width: 25px;
+  height: 37px;
+}
+
+.island-decoration-1 span {
+  right: auto;
+  left: 8%;
+}
+
+.island-decoration-2 span {
+  background: #2b6942;
+}
+
+.trophy-road-ok-button {
+  min-width: 270px;
+  margin-top: 58px;
+  padding: 18px 46px;
+
+  color: white;
+  font-size: 2rem;
+  font-weight: 1000;
+
+  background:
+    linear-gradient(
+      180deg,
+      #4fc6ff,
+      #087ce8
+    );
+
+  border: 6px solid #0756ad;
+  border-radius: 16px;
+
+  box-shadow:
+    inset 0 4px 0 rgba(255, 255, 255, 0.45),
+    0 8px 0 #043b81,
+    0 14px 20px rgba(0, 0, 0, 0.42);
+
+  cursor: pointer;
+
+  text-shadow:
+    -2px -2px 0 #101010,
+    2px -2px 0 #101010,
+    -2px 2px 0 #101010,
+    2px 2px 0 #101010;
+
+  transition:
+    transform 150ms ease,
+    filter 150ms ease;
+}
+
+.trophy-road-ok-button:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.1);
+}
+
+.trophy-road-ok-button:active {
+  transform: translateY(4px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.28),
+    0 3px 0 #043b81;
+}
+
+@keyframes roadArenaFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes roadIslandFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (max-width: 700px) {
+  .trophy-road-content {
+    grid-template-columns: 80px minmax(0, 1fr);
+    gap: 8px;
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .vertical-progress-shell {
+    width: 32px;
+  }
+
+  .road-reward-row {
+    grid-template-columns: 62px minmax(0, 1fr);
+  }
+
+  .road-floating-island {
+    min-height: 145px;
+    padding: 16px;
+  }
+
+  .road-reward-box {
+    width: 92px;
+    height: 92px;
+  }
+
+  .road-arena-banner {
+    padding: 14px 16px;
+  }
+
+  .trophy-road-ok-button {
+    min-width: 210px;
+  }
+}
