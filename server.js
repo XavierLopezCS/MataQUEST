@@ -2,6 +2,8 @@
 // Mimics the shape of the real Canvas REST API so the rest of the app
 // (frontend, XP logic, etc.) can be built against it before real
 // Canvas OAuth/access is sorted out.
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 require('dotenv').config( { quiet: true} );
 const express = require('express');

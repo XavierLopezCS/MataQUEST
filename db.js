@@ -1,7 +1,7 @@
 // db.js — MongoDB connection (via Mongoose)
 //
 // Call connectDB() once when the server starts (see server.js).
-// Reads the connection string from MONGODB_URI in your .env file.
+// Reads the connection string from MONGODB_URI in .env file.
 
 const mongoose = require('mongoose');
 

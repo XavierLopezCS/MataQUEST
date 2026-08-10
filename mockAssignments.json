@@ -27,17 +27,8 @@
     },
     {
       "id": 5,
-      "name": "just a test",
-      "points_possible": 15,
-      "due_at": "2026-08-15",
-      "has_submitted_submissions": false,
-      "submission_grade": null,
-      "submitted_at": null
-    },
-    {
-      "id": 6,
-      "name": "Test Assignment",
-      "points_possible": 20,
+      "name": "Test",
+      "points_possible": 10,
       "due_at": "2026-08-05",
       "has_submitted_submissions": false,
       "submission_grade": null,

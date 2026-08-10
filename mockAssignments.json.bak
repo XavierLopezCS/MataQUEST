@@ -24,15 +24,6 @@
       "has_submitted_submissions": true,
       "submission_grade": 65,
       "submitted_at": "2026-08-03"
-    },
-    {
-      "id": 5,
-      "name": "just a test",
-      "points_possible": 15,
-      "due_at": "2026-08-15",
-      "has_submitted_submissions": false,
-      "submission_grade": null,
-      "submitted_at": null
     }
   ],
   "102": [
