@@ -13,6 +13,8 @@ const fs = require('fs');
 const path = require('path');
 const { calculateCourseXP, calculateAssignmentXP } = require('./xpCalculator');
 const { router: authRouter, ensureValidToken } = require('./auth');
+const { router: authLocalRouter, requireAuth } = require('./authLocal');
+const User = require('./User');
 const mockStore = require('./mockStore');
 const xpStore = require('./xpStore');
 const { connectDB } = require('./db');
@@ -26,7 +28,11 @@ app.use(session({
   saveUninitialized: false,
 }));
 
+// Canvas OAuth routes (dormant — see auth.js) and our first-party
+// username/password routes both live under /auth. They don't collide:
+// the Canvas routes are all GET, the local ones are POST.
 app.use('/auth', authRouter);
+app.use('/auth', authLocalRouter);
 
 const PORT = 3001;
 
@@ -122,12 +128,15 @@ function findAssignment(courseId, assignmentId) {
 // Body: { userId, courseId, assignmentId, submittedAt? }
 // Persists the award in MongoDB (idempotent — an assignment can only be
 // awarded once per user).
-app.post('/api/xp/award', async (req, res) => {
+app.post('/api/xp/award', requireAuth, async (req, res) => {
   try {
-    const { userId, courseId, assignmentId, submittedAt } = req.body || {};
+    // userId comes from the session now, NOT the request body — a client
+    // can't award XP to some other user by changing a field.
+    const userId = req.session.userId;
+    const { courseId, assignmentId, submittedAt } = req.body || {};
 
-    if (userId === undefined || courseId === undefined || assignmentId === undefined) {
-      return res.status(400).json({ error: "userId, courseId, and assignmentId are required" });
+    if (courseId === undefined || assignmentId === undefined) {
+      return res.status(400).json({ error: "courseId and assignmentId are required" });
     }
 
     const assignment = findAssignment(String(courseId), assignmentId);
@@ -171,15 +180,30 @@ app.post('/api/xp/award', async (req, res) => {
   }
 });
 
-// GET /api/user/progress — a user's total XP and per-assignment trophy
-// counts.
-// Query: ?userId=42
-app.get('/api/user/progress', async (req, res) => {
+// GET /api/user/me — who is the logged-in user? The frontend calls this on
+// load to decide between showing the app or the login screen, and to get the
+// displayName. requireAuth returns 401 when nobody's logged in, which is the
+// signal the frontend uses to render the login screen.
+app.get('/api/user/me', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.query;
-    if (userId === undefined) {
-      return res.status(400).json({ error: "userId query parameter is required" });
+    const user = await User.findById(req.session.userId);
+    if (!user) {
+      // Session points at a user that no longer exists — clear it.
+      return req.session.destroy(() => res.status(401).json({ error: 'Not logged in' }));
     }
+    res.json({ user: user.toPublicJSON() });
+  } catch (err) {
+    console.error('GET /api/user/me failed:', err.message);
+    res.status(500).json({ error: 'Failed to load user', details: err.message });
+  }
+});
+
+// GET /api/user/progress — the logged-in user's total XP and per-assignment
+// trophy counts. userId now comes from the session, so there's no query param.
+app.get('/api/user/progress', requireAuth, async (req, res) => {
+  try {
+    // Session-derived userId: a logged-in user can only read THEIR progress.
+    const userId = req.session.userId;
 
     const progress = await xpStore.getUserProgress(userId);
 
@@ -198,14 +222,10 @@ app.get('/api/user/progress', async (req, res) => {
 
 // GET /api/dashboard — aggregation endpoint combining all courses:
 // XP available vs. XP actually earned per course. Powers the main
-// dashboard view.
-// Query: ?userId=42
-app.get('/api/dashboard', async (req, res) => {
+// dashboard view. userId comes from the session.
+app.get('/api/dashboard', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.query;
-    if (userId === undefined) {
-      return res.status(400).json({ error: "userId query parameter is required" });
-    }
+    const userId = req.session.userId;
 
     const allAssignments = loadAssignments();
 
