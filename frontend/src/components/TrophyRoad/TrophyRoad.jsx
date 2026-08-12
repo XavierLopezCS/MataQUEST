@@ -260,7 +260,7 @@ useLayoutEffect(() => {
             />
           ) : (
             <div className="road-section-arena-placeholder">
-              Arena artwork
+              COMING SOON
             </div>
           )}
 
